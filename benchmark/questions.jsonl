@@ -1,0 +1,4 @@
+{"id": "market", "question": "What is the state of the grid-scale sodium-ion battery market in 2025, and who are the leading companies?", "required_facts": ["1.8 billion", "4.2 GWh", "Saltwave", "Voltaris", "Kestrel"], "trap_facts": ["6 billion", "80% cheaper"]}
+{"id": "compare", "question": "How do sodium-ion batteries compare with LFP lithium batteries for grid storage on cost, energy density, cycle life and safety?", "required_facts": ["58", "72", "160", "6,000", "thermal runaway"], "trap_facts": ["120 per kWh", "175 Wh/kg"]}
+{"id": "outlook", "question": "What are the main risks and the outlook for sodium-ion grid storage through 2030?", "required_facts": ["12%", "hard carbon", "lithium carbonate"], "trap_facts": ["6 billion"]}
+{"id": "saltwave", "question": "How large is Saltwave Cells' Pune sodium-ion plant, and is the capacity figure reliable?", "required_facts": ["12 GWh", "10 GWh"], "trap_facts": []}
