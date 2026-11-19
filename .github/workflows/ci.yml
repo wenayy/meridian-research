@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests scripts
+      - run: pytest -q
+      - name: Benchmark corpus is reproducible
+        run: python scripts/build_benchmark.py && git diff --exit-code benchmark/corpus.jsonl benchmark/questions.jsonl
+      - name: End-to-end pipeline smoke test (offline, scripted model)
+        run: |
+          meridian bench --offline
+          python - <<'PY'
+          import json
+          s = json.load(open("benchmark/results/results.json"))["summary"]
+          print(s)
+          assert s["low_cred_cited"] == 0, "low-credibility sources were cited"
+          assert s["cited_credibility"] >= 0.8
+          PY
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t meridian .
+      - run: |
+          docker run -d -p 8000:8000 -e MERIDIAN_LLM_API_KEY=dummy -e MERIDIAN_SEARCH_PROVIDER=local --name m meridian
+          for i in $(seq 1 20); do curl -fs localhost:8000/api/health && exit 0; sleep 1; done; docker logs m; exit 1
