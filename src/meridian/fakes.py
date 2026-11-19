@@ -17,6 +17,19 @@ def _words(t: str) -> set[str]:
     return {w for w in re.findall(r"[a-z0-9]+", t.lower()) if w not in _STOP and len(w) > 2}
 
 
+# Words that say what a sub-question is *about*; extraction weights them so each section
+# pulls different evidence instead of the same few topical sentences.
+_FOCUS = set("market size grew growth reached deployments billion gwh leading companies manufacturers players share "
+             "supplier cost costs price prices kwh cheaper risks risk safety cycle life density".split())
+
+
+def _topic(q: str) -> str:
+    m = re.search(r"\b(?:of|about|on)\s+(.+?)(?:\s+in\s+\d{4}|,|\?|$)", q, re.I)
+    if m and len(m.group(1).split()) >= 2:
+        return m.group(1).strip()
+    return " ".join(q.rstrip("?").split()[2:8])
+
+
 def _field(text: str, label: str) -> str:
     m = re.search(rf"{label}:\s*(.+)", text)
     return m.group(1).strip() if m else ""
@@ -29,16 +42,20 @@ def scripted_handler(messages: list[dict], json_mode: bool) -> str:
         return json.dumps({"allowed": not bad, "reason": "unsafe request" if bad else "ok"})
     if "TASK:PLAN" in system:
         q = _field(user, "RESEARCH QUESTION")
-        core = " ".join(sorted(_words(q), key=q.lower().find)[:6])
-        subs = [{"id": "q1", "question": f"What is the current state of {core}?", "search_queries": [q, f"{core} 2025"]},
-                {"id": "q2", "question": f"Who are the key players in {core}?", "search_queries": [f"{core} companies"]},
-                {"id": "q3", "question": f"What are the costs and risks of {core}?", "search_queries": [f"{core} cost risks"]}]
+        core = _topic(q)
+        subs = [{"id": "q1", "question": f"How large is {core} and how fast has it grown?",
+                 "search_queries": [q, f"{core} market size 2025"]},
+                {"id": "q2", "question": f"Which companies and manufacturers lead {core}?",
+                 "search_queries": [f"{core} leading companies"]},
+                {"id": "q3", "question": f"What do cost, price per kWh and safety risks look like for {core}?",
+                 "search_queries": [f"{core} cost price safety"]}]
         return json.dumps({"objective": q, "sub_questions": subs})
     if "TASK:EXTRACT" in system:
         sq = _words(_field(user, "SUB-QUESTION"))
         text = user.split("SOURCE TEXT:", 1)[-1]
         sents = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if len(s.split()) >= 6]
-        scored = sorted(sents, key=lambda s: -len(_words(s) & sq))
+        focus = sq & _FOCUS
+        scored = sorted(sents, key=lambda s: -(3 * len(_words(s) & focus) + len(_words(s) & sq)))
         claims = [{"claim": s, "quote": s} for s in scored[:3] if _words(s) & sq]
         return json.dumps({"relevant": bool(claims), "claims": claims})
     if "TASK:REVIEW" in system:
