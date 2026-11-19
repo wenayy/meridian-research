@@ -37,7 +37,13 @@ def create_app(settings: Settings | None = None, orchestrator: Orchestrator | No
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         if state["orch"] is None:
-            state["orch"] = build_orchestrator(s)
+            if s.demo:
+                from ..llm import FakeLLM
+
+                s.search_provider = "local"
+                state["orch"] = build_orchestrator(s, llm=FakeLLM(model="offline scripted demo", delay=0.02))
+            else:
+                state["orch"] = build_orchestrator(s)
         STORE.path = s.trace_file
         yield
 

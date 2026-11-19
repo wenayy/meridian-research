@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # search
     search_provider: Literal["tavily", "brave", "serper", "duckduckgo", "local"] = "duckduckgo"
     search_api_key: str | None = None
+    demo: bool = False  # scripted model + local synthetic web; no keys or network
     local_corpus: Path = Path("benchmark/corpus.jsonl")
     cache_path: Path = Path(".meridian_cache.sqlite")
 

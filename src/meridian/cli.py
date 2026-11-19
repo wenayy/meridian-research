@@ -74,8 +74,12 @@ def cmd_bench(args) -> None:
 
 
 def cmd_serve(args) -> None:
+    import os
+
     import uvicorn
 
+    if args.demo:
+        os.environ["MERIDIAN_DEMO"] = "1"
     uvicorn.run("meridian.api.server:create_app", factory=True, host=args.host, port=args.port)
 
 
@@ -98,6 +102,7 @@ def main(argv: list[str] | None = None) -> None:
     sv = sub.add_parser("serve", help="run the web console + API")
     sv.add_argument("--host", default="0.0.0.0")
     sv.add_argument("--port", type=int, default=8000)
+    sv.add_argument("--demo", action="store_true", help="scripted model + local synthetic web (no keys)")
     sv.set_defaults(fn=cmd_serve)
     args = p.parse_args(argv)
     args.fn(args)

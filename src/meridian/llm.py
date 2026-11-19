@@ -132,10 +132,10 @@ class FakeLLM:
     pipeline runs end-to-end with no network.
     """
 
-    model = "fake"
-
-    def __init__(self, handler: Callable[[list[Message], bool], str] | None = None):
+    def __init__(self, handler: Callable[[list[Message], bool], str] | None = None, *,
+                 model: str = "fake", delay: float = 0.0):
         self.handler = handler or default_fake_handler
+        self.model, self.delay = model, delay  # delay paces streaming so demos read naturally
         self.calls: list[list[Message]] = []
 
     def complete(self, messages: list[Message], *, temperature: float = 0.0, json_mode: bool = False) -> str:
@@ -148,6 +148,8 @@ class FakeLLM:
     def stream(self, messages: list[Message], *, temperature: float = 0.0) -> Iterator[str]:
         text = self.complete(messages)
         for i, word in enumerate(text.split(" ")):
+            if self.delay:
+                time.sleep(self.delay)
             yield word if i == 0 else " " + word
 
 
