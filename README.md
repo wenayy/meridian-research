@@ -4,9 +4,11 @@
 
 **An autonomous deep-research agent that produces analyst-grade, fully cited reports, and fact-checks its own citations before you read them.**
 
-![python](https://img.shields.io/badge/python-3.10%20%7C%203.12-blue) ![tests](https://img.shields.io/badge/tests-21%20passing-brightgreen) ![providers](https://img.shields.io/badge/LLM-any%20OpenAI--compatible-informational) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![python](https://img.shields.io/badge/python-3.10%20%7C%203.12-blue) ![tests](https://img.shields.io/badge/tests-22%20passing-brightgreen) ![providers](https://img.shields.io/badge/LLM-any%20OpenAI--compatible-informational) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
 </div>
+
+![Meridian researching a market question: the planner splits it into sub-questions, researchers read sources in parallel with credibility scores, and the cited report renders with its source list](docs/demo.gif)
 
 Give Meridian a question like *"How do sodium-ion batteries compare with LFP for grid storage?"* It then:
 1. plans the research,
@@ -92,7 +94,7 @@ meridian bench            # with your configured LLM → benchmark/results/resul
 meridian bench --offline  # scripted model: validates the pipeline end-to-end (runs in CI)
 ```
 
-In CI the offline run gates the parts of the pipeline that don't depend on the model's prose quality. Source selection currently gives a mean credibility of cited sources of **0.93**, **0** low-credibility sources cited and a trap rate of **0**. Adding the credibility floor and cross-sub-question source sharing moved cited-source credibility from **0.71 to 0.93**.
+In CI the offline run gates the parts of the pipeline that don't depend on the model's prose quality. Source selection currently gives a mean credibility of cited sources of **0.88** and a scripted-model fact recall of **0.82**, **0** low-credibility sources cited and a trap rate of **0**. Adding the credibility floor and cross-sub-question source sharing moved cited-source credibility from **0.71 to 0.93** at the time; sharper sub-question focus later lifted fact recall from 0.67 to 0.82 while citing a few more mid-credibility sources.
 
 ## Quick start
 
@@ -103,6 +105,7 @@ make demo                     # full multi-agent pipeline offline: no API keys a
 cp .env.example .env          # add an LLM key (OpenAI / Groq / OpenRouter / local Ollama)
 meridian research "What are the main risks for India's quick-commerce companies in 2026?"
 meridian serve                # web console at http://localhost:8000 with live agent activity
+meridian serve --demo         # same console with no keys: scripted model + local synthetic web
 ```
 
 Reports are written to `reports/<question>.md` and `.html`. Web search defaults to DuckDuckGo, which needs no key. For production, set `MERIDIAN_SEARCH_PROVIDER=tavily|brave|serper`.
